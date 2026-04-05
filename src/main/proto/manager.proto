@@ -1,0 +1,94 @@
+syntax = "proto3";
+
+package iot.grpc_manager;
+
+option java_package = "com.iot.managerservice.application.grpc.generated";
+option java_multiple_files = true;
+
+
+service ManagerService {
+  // Streaming Bidireccional
+  rpc ConnectStream(stream FromManager) returns (stream ToManager);
+}
+
+
+message ToManager {
+  string edge_id = 1;
+  oneof payload {
+    Settings settings = 2;
+    SettingOk setting_ok = 3;
+    FirmwareOutcome firmware_outcome = 4;
+    HelloWorld hello_world = 5;
+  }
+}
+
+message FromManager {
+  string edge_id = 1;
+  oneof payload {
+    SettingOk setting_ok = 2;
+    UpdateFirmware update_firmware = 3;
+    Network network = 4;
+    DeleteHub delete_hub = 5;
+    Settings settings = 6;
+  }
+}
+
+
+message Metadata {
+  string sender_user_id = 1;
+  string destination_id = 2;
+  int64 timestamp = 3;
+}
+
+message Settings {
+  Metadata metadata = 1;
+  string network = 2;
+  string wifi_ssid = 3;
+  string wifi_password = 4;
+  string mqtt_uri = 5;
+  string device_name = 6;
+  uint32 sample = 7;
+  uint32 energy_mode = 8;
+}
+
+message SettingOk {
+  Metadata metadata = 1;
+  string network = 2;
+  bool handshake = 3;
+}
+
+message Network {
+  Metadata metadata = 1;
+  string id_network = 2;
+  string name_network = 3;
+  bool active = 4;
+  bool delete_network = 5;
+}
+
+message DeleteHub {
+  Metadata metadata = 1;
+  string network = 2;
+}
+
+message ActiveHub {
+  Metadata metadata = 1;
+  string network = 2;
+  bool active = 3;
+}
+
+message UpdateFirmware {
+  Metadata metadata = 1;
+  string network = 2;
+}
+
+message FirmwareOutcome {
+  Metadata metadata = 1;
+  string network = 2;
+  bool is_ok = 3;
+  float percentage_ok = 4;
+}
+
+message HelloWorld {
+  Metadata metadata = 1;
+  bool hello = 2;
+}
