@@ -26,7 +26,7 @@ public class GrpcMessageSenderImpl implements GrpcMessageSender {
     }
 
     @Override
-    public void sendAck(HubSettings hub, Long messageId) {
+    public void sendAck(String edgeId, HubSettings hub, Long messageId) {
         if (routerOutboundStream == null) {
             log.error("No se puede enviar ACK para el Hub {}. ¡El Router no está conectado!", hub.hubId());
             return;
@@ -47,6 +47,7 @@ public class GrpcMessageSenderImpl implements GrpcMessageSender {
                     .build();
 
             FromManager outgoingMessage = FromManager.newBuilder()
+                    .setEdgeId(edgeId)
                     .setSettingOk(ackPayload)
                     .build();
 
@@ -101,6 +102,7 @@ public class GrpcMessageSenderImpl implements GrpcMessageSender {
             com.iot.managerservice.application.grpc.generated.Network networkPayload = networkBuilder.build();
 
             FromManager outgoingMessage = FromManager.newBuilder()
+                    .setEdgeId(network.edgeId())
                     .setNetwork(networkPayload)
                     .build();
 
@@ -110,5 +112,36 @@ public class GrpcMessageSenderImpl implements GrpcMessageSender {
         } catch (Exception e) {
             log.error("Fallo al enviar notificación gRPC de Red: {}", e.getMessage());
         }
+    }
+
+    @Override
+    public void sendHubSettings(String edgeId, Long messageId, HubSettings settings) {
+        if (routerOutboundStream == null) return;
+
+        Metadata metadata = Metadata.newBuilder()
+                .setSenderUserId("server0")
+                .setDestinationId(settings.hubId())
+                .setTimestamp(Instant.now().getEpochSecond())
+                .build();
+
+        com.iot.managerservice.application.grpc.generated.Settings settingsPayload =
+                com.iot.managerservice.application.grpc.generated.Settings.newBuilder()
+                        .setMetadata(metadata)
+                        .setMessageId(messageId)
+                        .setNetwork(settings.networkId())
+                        .setDeviceName(settings.deviceName())
+                        .setWifiSsid(settings.wifiSsid())
+                        .setWifiPassword(settings.wifiPassword())
+                        .setMqttUri(settings.mqttUri())
+                        .setSample(settings.sample())
+                        .setEnergyMode(settings.energyMode())
+                        .build();
+
+        FromManager outgoingMessage = FromManager.newBuilder()
+                .setEdgeId(edgeId)
+                .setSettings(settingsPayload)
+                .build();
+
+        routerOutboundStream.onNext(outgoingMessage);
     }
 }

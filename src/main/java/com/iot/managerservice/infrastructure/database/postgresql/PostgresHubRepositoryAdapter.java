@@ -1,6 +1,5 @@
 package com.iot.managerservice.infrastructure.database.postgresql;
 
-import com.iot.managerservice.application.grpc.generated.Settings; // IMPORTANTE: Importamos tu clase gRPC
 import com.iot.managerservice.domain.model.HubIdAndVersion;
 import com.iot.managerservice.domain.model.HubSettings;
 import com.iot.managerservice.domain.repository.HubRepository;
@@ -9,6 +8,7 @@ import com.iot.managerservice.infrastructure.database.postgresql.repositories.Jp
 import org.springframework.stereotype.Repository;
 import lombok.extern.slf4j.Slf4j;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -68,6 +68,14 @@ public class PostgresHubRepositoryAdapter implements HubRepository {
                         e.getWifiSsid(), e.getWifiPassword(), e.getMqttUri(), e.getSample(),
                         e.getEnergyMode()
                 )).collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<HubSettings> findById(String hubId) {
+        return jpaHubRepository.findById(hubId)
+                .map(e -> new HubSettings(e.getHubId(), e.getNetworkId(), e.getDeviceName(),
+                        e.getWifiSsid(), e.getWifiPassword(), e.getMqttUri(), e.getSample(),
+                        e.getEnergyMode()));
     }
 
     @Override

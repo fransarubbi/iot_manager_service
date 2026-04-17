@@ -3,6 +3,7 @@ package com.iot.managerservice.usecase.settings;
 import com.iot.managerservice.domain.model.HubSettings; // <-- 1. Importa el modelo de dominio
 import com.iot.managerservice.domain.port.GrpcMessageSender;
 import com.iot.managerservice.domain.repository.HubRepository;
+import com.iot.managerservice.domain.repository.NetworkRepository;
 import com.iot.managerservice.infrastructure.cache.HubVersionCache;
 import com.iot.managerservice.infrastructure.cache.HubVersionCache.CacheResult;
 import org.springframework.stereotype.Service;
@@ -16,14 +17,21 @@ public class ManageSettingsUseCase {
     private final HubVersionCache ramCache;
     private final HubRepository database;
     private final GrpcMessageSender messageSender;
+    private final NetworkRepository networkRepository;
 
-    public ManageSettingsUseCase(HubVersionCache ramCache, HubRepository database, GrpcMessageSender messageSender) {
+    public ManageSettingsUseCase(HubVersionCache ramCache, HubRepository database,
+                                 GrpcMessageSender messageSender, NetworkRepository networkRepository) {
         this.ramCache = ramCache;
         this.database = database;
         this.messageSender = messageSender;
+        this.networkRepository = networkRepository;
     }
 
     public void execute(HubSettings hub, Long incomingMsgId) {
+
+        String edgeId = networkRepository.findById(hub.networkId())
+                .orElseThrow(() -> new IllegalArgumentException("Red no encontrada para enviar el ACK"))
+                .edgeId();
 
         CacheResult status = ramCache.checkAndUpdate(hub.hubId(), incomingMsgId);
 
@@ -31,7 +39,7 @@ public class ManageSettingsUseCase {
             case NEW_HUB:
                 try {
                     database.save(hub, incomingMsgId);
-                    messageSender.sendAck(hub, incomingMsgId);
+                    messageSender.sendAck(edgeId, hub, incomingMsgId);
                 } catch (Exception e) {
                     ramCache.remove(hub.hubId());
                     log.error("Fallo BD al guardar nuevo Hub.");
@@ -41,14 +49,14 @@ public class ManageSettingsUseCase {
             case VALID_UPDATE:
                 try {
                     database.update(hub, incomingMsgId);
-                    messageSender.sendAck(hub, incomingMsgId);
+                    messageSender.sendAck(edgeId, hub, incomingMsgId);
                 } catch (Exception e) {
                     log.error("Fallo BD al actualizar Hub.");
                 }
                 break;
 
             case DUPLICATE_MESSAGE:
-                messageSender.sendAck(hub, incomingMsgId);
+                messageSender.sendAck(edgeId, hub, incomingMsgId);
                 break;
 
             case OUTDATED_MESSAGE:

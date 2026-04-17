@@ -5,6 +5,7 @@ import com.iot.managerservice.domain.model.HubSettings;
 import com.iot.managerservice.infrastructure.cache.EdgeValidationCache;
 import com.iot.managerservice.usecase.notification.ManageNotificationsUseCase;
 import com.iot.managerservice.usecase.settings.ManageSettingsUseCase;
+import com.iot.managerservice.usecase.settings.ProcessSettingOkUseCase;
 import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
 import lombok.extern.slf4j.Slf4j;
@@ -18,27 +19,26 @@ public class GrpcController extends ManagerServiceGrpc.ManagerServiceImplBase {
     private final GrpcMessageSenderImpl messageSender;
     private final EdgeValidationCache edgeValidationCache;
     private final ManageNotificationsUseCase notificationUseCase;
+    private final ProcessSettingOkUseCase processSettingOkUseCase;
 
-    // Inyectamos ambas clases
     public GrpcController(ManageSettingsUseCase manageSettingsUseCase,
                           GrpcMessageSenderImpl messageSender,
                           EdgeValidationCache edgeValidationCache,
-                          ManageNotificationsUseCase notificationUseCase) {
+                          ManageNotificationsUseCase notificationUseCase,
+                          ProcessSettingOkUseCase processSettingOkUseCase) {
         this.manageSettingsUseCase = manageSettingsUseCase;
         this.messageSender = messageSender;
         this.edgeValidationCache = edgeValidationCache;
         this.notificationUseCase = notificationUseCase;
+        this.processSettingOkUseCase = processSettingOkUseCase;
     }
 
     @Override
     public StreamObserver<ToManager> connectStream(StreamObserver<FromManager> responseObserver) {
 
         log.info("¡El Router ha iniciado la conexión bidireccional!");
-
-        // Se guarda la tubería de salida en el Sender para usarla despues
         messageSender.setRouterStream(responseObserver);
 
-        // Retornamos el Observer que se queda ESCUCHANDO infinitamente
         return new StreamObserver<ToManager>() {
 
             @Override
@@ -57,7 +57,13 @@ public class GrpcController extends ManagerServiceGrpc.ManagerServiceImplBase {
                         break;
 
                     case SETTING_OK:
-                        handleSettingsOk(edgeId, request.getSettingOk());
+                        com.iot.managerservice.application.grpc.generated.SettingOk okMsg = request.getSettingOk();
+                        String targetHubId = okMsg.getMetadata().getSenderUserId();
+                        long msgIdToConfirm = okMsg.getMessageId();
+                        boolean result = true;
+                        String hardwareMsg = "Configuración aplicada en hardware";
+                        log.info("Recibido SettingOk desde el Hub: {}", targetHubId);
+                        processSettingOkUseCase.execute(targetHubId, msgIdToConfirm, result, hardwareMsg);
                         break;
 
                     case HELLO_WORLD: {
@@ -113,10 +119,6 @@ public class GrpcController extends ManagerServiceGrpc.ManagerServiceImplBase {
 
                 log.debug("Procesando Settings para Hub: {} (MsgId: {})", edgeId, messageId);
                 manageSettingsUseCase.execute(domainSettings, messageId);
-            }
-
-            private void handleSettingsOk(String edgeId, SettingOk g) {
-                // ACA SE DEBE GUARDAR LA NUEVA CONFIGURACION
             }
         };
     }
