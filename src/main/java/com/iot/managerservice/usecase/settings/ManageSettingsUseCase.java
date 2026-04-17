@@ -1,5 +1,6 @@
 package com.iot.managerservice.usecase.settings;
 
+import com.iot.managerservice.domain.model.HubSettings; // <-- 1. Importa el modelo de dominio
 import com.iot.managerservice.domain.port.GrpcMessageSender;
 import com.iot.managerservice.domain.repository.HubRepository;
 import com.iot.managerservice.infrastructure.cache.HubVersionCache;
@@ -9,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 
 @Slf4j
-@Service  // Esto le dice a Spring que haga un Singleton
+@Service
 public class ManageSettingsUseCase {
 
     private final HubVersionCache ramCache;
@@ -22,35 +23,32 @@ public class ManageSettingsUseCase {
         this.messageSender = messageSender;
     }
 
-    public void execute(String hubId, Long incomingMsgId, Object payload) {
+    public void execute(HubSettings hub, Long incomingMsgId) {
 
-        CacheResult status = ramCache.checkAndUpdate(hubId, incomingMsgId);
+        CacheResult status = ramCache.checkAndUpdate(hub.hubId(), incomingMsgId);
 
         switch (status) {
             case NEW_HUB:
                 try {
-                    database.save(hubId, incomingMsgId, payload);
-                    messageSender.sendAck(hubId);
+                    database.save(hub, incomingMsgId);
+                    messageSender.sendAck(hub, incomingMsgId);
                 } catch (Exception e) {
-                    // Si falla la BD, hay que deshacer el candado en RAM
-                    ramCache.remove(hubId);
+                    ramCache.remove(hub.hubId());
                     log.error("Fallo BD al guardar nuevo Hub.");
                 }
                 break;
 
             case VALID_UPDATE:
                 try {
-                    database.update(hubId, incomingMsgId, payload);
-                    messageSender.sendAck(hubId);
+                    database.update(hub, incomingMsgId);
+                    messageSender.sendAck(hub, incomingMsgId);
                 } catch (Exception e) {
                     log.error("Fallo BD al actualizar Hub.");
-                    // Implementar un mecanismo para retroceder el ID en RAM
                 }
                 break;
 
             case DUPLICATE_MESSAGE:
-                // Mensaje repetido = Mandar ACK sin tocar DB
-                messageSender.sendAck(hubId);
+                messageSender.sendAck(hub, incomingMsgId);
                 break;
 
             case OUTDATED_MESSAGE:

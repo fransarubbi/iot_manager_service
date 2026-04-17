@@ -8,7 +8,7 @@ option java_multiple_files = true;
 
 service ManagerService {
   // Streaming Bidireccional
-  rpc ConnectStream(stream FromManager) returns (stream ToManager);
+  rpc ConnectStream(stream ToManager) returns (stream FromManager);
 }
 
 

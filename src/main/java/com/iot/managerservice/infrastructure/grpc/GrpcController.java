@@ -1,50 +1,109 @@
 package com.iot.managerservice.infrastructure.grpc;
 
 import com.iot.managerservice.application.grpc.generated.*;
+import com.iot.managerservice.domain.model.HubSettings;
+import com.iot.managerservice.infrastructure.cache.EdgeValidationCache;
 import com.iot.managerservice.usecase.settings.ManageSettingsUseCase;
 import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
+import lombok.extern.slf4j.Slf4j;
 
 
-@GrpcService   // Levanta el servidor gRPC en el puerto 9090
+@Slf4j
+@GrpcService
 public class GrpcController extends ManagerServiceGrpc.ManagerServiceImplBase {
 
     private final ManageSettingsUseCase manageSettingsUseCase;
+    private final GrpcMessageSenderImpl messageSender;
+    private final EdgeValidationCache edgeValidationCache;
 
-    public GrpcController(ManageSettingsUseCase manageSettingsUseCase) {
+    // Inyectamos ambas clases
+    public GrpcController(ManageSettingsUseCase manageSettingsUseCase,
+                          GrpcMessageSenderImpl messageSender,
+                          EdgeValidationCache edgeValidationCache) {
         this.manageSettingsUseCase = manageSettingsUseCase;
+        this.messageSender = messageSender;
+        this.edgeValidationCache = edgeValidationCache;
     }
 
     @Override
-    public StreamObserver<FromManager> connectStream(StreamObserver<ToManager> responseObserver) {
+    public StreamObserver<ToManager> connectStream(StreamObserver<FromManager> responseObserver) {
 
-        // Retorna un "Observer" que reacciona cada vez que llega un paquete
-        return new StreamObserver<FromManager>() {
+        log.info("¡El Router ha iniciado la conexión bidireccional!");
+
+        // Se guarda la tubería de salida en el Sender para usarla despues
+        messageSender.setRouterStream(responseObserver);
+
+        // Retornamos el Observer que se queda ESCUCHANDO infinitamente
+        return new StreamObserver<ToManager>() {
 
             @Override
-            public void onNext(FromManager request) {
+            public void onNext(ToManager request) {
+                String edgeId = request.getEdgeId();
 
-                String hubId = request.getEdgeId();
-
-                if (request.hasSettings()) {
-                    Settings settingsPayload = request.getSettings();
-
-                    Long messageId = settingsPayload.getMetadata().getTimestamp();
-                    manageSettingsUseCase.execute(hubId, messageId, settingsPayload);
+                if (!edgeValidationCache.isValid(edgeId)) {
+                    log.warn("ACCESO DENEGADO: Se recibió un mensaje de un edge_id no registrado ({}). Paquete descartado.", edgeId);
+                    return;
                 }
 
-                // Aquí agregar más "if" para request.hasNetwork(), request.hasDeleteHub(), etc.
+                switch (request.getPayloadCase()) {
+
+                    case SETTINGS:
+                        handleSettings(edgeId, request.getSettings());
+                        break;
+
+                    case SETTING_OK:
+                        handleSettingsOk(edgeId, request.getSettingOk());
+                        break;
+
+                    case HELLO_WORLD:
+                        log.info("Mensaje Hello recibido de Edge: {}", edgeId);
+                        break;
+
+                    case FIRMWARE_OUTCOME:
+                        log.info("Resultado de actualización de firmware");
+                        break;
+
+                    case PAYLOAD_NOT_SET:
+                        log.warn("Se recibió un paquete vacío desde el Edge: {}", edgeId);
+                        break;
+                }
             }
 
             @Override
             public void onError(Throwable t) {
-                System.err.println("Error en la conexión gRPC con el Router: " + t.getMessage());
+                log.error("El stream con el Router se rompió: {}", t.getMessage());
+                // Por seguridad, desconectamos
+                messageSender.setRouterStream(null);
             }
 
             @Override
             public void onCompleted() {
-                System.out.println("El Router cerró la conexión gRPC.");
+                log.info("El Router cerró la conexión.");
+                messageSender.setRouterStream(null);
                 responseObserver.onCompleted();
+            }
+
+            private void handleSettings(String edgeId, Settings g) {
+                Long messageId = g.getMessageId();
+
+                HubSettings domainSettings = new HubSettings(
+                        g.getMetadata().getSenderUserId(),
+                        g.getNetwork(),
+                        g.getDeviceName(),
+                        g.getWifiSsid(),
+                        g.getWifiPassword(),
+                        g.getMqttUri(),
+                        g.getSample(),
+                        g.getEnergyMode()
+                );
+
+                log.debug("Procesando Settings para Hub: {} (MsgId: {})", edgeId, messageId);
+                manageSettingsUseCase.execute(domainSettings, messageId);
+            }
+
+            private void handleSettingsOk(String edgeId, SettingOk g) {
+
             }
         };
     }
