@@ -8,6 +8,7 @@ import java.util.List;
 public interface HubRepository {
     void save(HubSettings settings, Long messageId);
     void update(HubSettings settings, Long messageId);
-
     List<HubIdAndVersion> getAllHubVersions();
+    List<HubSettings> findByNetworkId(String networkId);
+    long countByNetworkId(String networkId);
 }

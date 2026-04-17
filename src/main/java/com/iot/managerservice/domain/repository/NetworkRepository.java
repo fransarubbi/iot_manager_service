@@ -12,4 +12,5 @@ public interface NetworkRepository {
     List<Network> findAll();
     void deleteById(String networkId);
     void updateActiveStatus(String networkId, boolean active);
+    List<Network> findByEdgeId(String edgeId);
 }

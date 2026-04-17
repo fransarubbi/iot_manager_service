@@ -3,6 +3,7 @@ package com.iot.managerservice.infrastructure.grpc;
 import com.iot.managerservice.application.grpc.generated.*;
 import com.iot.managerservice.domain.model.HubSettings;
 import com.iot.managerservice.infrastructure.cache.EdgeValidationCache;
+import com.iot.managerservice.usecase.notification.ManageNotificationsUseCase;
 import com.iot.managerservice.usecase.settings.ManageSettingsUseCase;
 import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
@@ -16,14 +17,17 @@ public class GrpcController extends ManagerServiceGrpc.ManagerServiceImplBase {
     private final ManageSettingsUseCase manageSettingsUseCase;
     private final GrpcMessageSenderImpl messageSender;
     private final EdgeValidationCache edgeValidationCache;
+    private final ManageNotificationsUseCase notificationUseCase;
 
     // Inyectamos ambas clases
     public GrpcController(ManageSettingsUseCase manageSettingsUseCase,
                           GrpcMessageSenderImpl messageSender,
-                          EdgeValidationCache edgeValidationCache) {
+                          EdgeValidationCache edgeValidationCache,
+                          ManageNotificationsUseCase notificationUseCase) {
         this.manageSettingsUseCase = manageSettingsUseCase;
         this.messageSender = messageSender;
         this.edgeValidationCache = edgeValidationCache;
+        this.notificationUseCase = notificationUseCase;
     }
 
     @Override
@@ -56,13 +60,22 @@ public class GrpcController extends ManagerServiceGrpc.ManagerServiceImplBase {
                         handleSettingsOk(edgeId, request.getSettingOk());
                         break;
 
-                    case HELLO_WORLD:
-                        log.info("Mensaje Hello recibido de Edge: {}", edgeId);
+                    case HELLO_WORLD: {
+                        String description = "edge_id: " + request.getHelloWorld().getMetadata().getSenderUserId()
+                                + "timestamp: " + request.getHelloWorld().getMetadata().getTimestamp();
+                        notificationUseCase.createNotification("HELLO_WORLD", description);
                         break;
+                    }
 
-                    case FIRMWARE_OUTCOME:
-                        log.info("Resultado de actualización de firmware");
+                    case FIRMWARE_OUTCOME: {
+                        String description = "edge_id: " + request.getFirmwareOutcome().getMetadata().getSenderUserId()
+                                + "timestamp: " + request.getFirmwareOutcome().getMetadata().getTimestamp()
+                                + "network_id: " + request.getFirmwareOutcome().getNetwork()
+                                + "is_ok: " + request.getFirmwareOutcome().getIsOk()
+                                + "percentage: " + request.getFirmwareOutcome().getPercentageOk();
+                        notificationUseCase.createNotification("FIRMWARE_OUTCOME", description);
                         break;
+                    }
 
                     case PAYLOAD_NOT_SET:
                         log.warn("Se recibió un paquete vacío desde el Edge: {}", edgeId);
@@ -103,7 +116,7 @@ public class GrpcController extends ManagerServiceGrpc.ManagerServiceImplBase {
             }
 
             private void handleSettingsOk(String edgeId, SettingOk g) {
-
+                // ACA SE DEBE GUARDAR LA NUEVA CONFIGURACION
             }
         };
     }

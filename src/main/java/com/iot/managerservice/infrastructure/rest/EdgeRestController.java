@@ -1,11 +1,14 @@
 package com.iot.managerservice.infrastructure.rest;
 
 import com.iot.managerservice.domain.model.Edge;
+import com.iot.managerservice.usecase.edge.GetAllEdgesUseCase;
 import com.iot.managerservice.usecase.edge.RegisterEdgeUseCase;
 import com.iot.managerservice.usecase.edge.DeleteEdgeUseCase;
 import com.iot.managerservice.domain.port.EdgeConfigExporter;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -15,13 +18,16 @@ public class EdgeRestController {
     private final RegisterEdgeUseCase registerUseCase;
     private final EdgeConfigExporter configExporter;
     private final DeleteEdgeUseCase deleteUseCase;
+    private final GetAllEdgesUseCase getAllUseCase;
 
     public EdgeRestController(RegisterEdgeUseCase registerUseCase,
                               DeleteEdgeUseCase deleteUseCase,
-                              EdgeConfigExporter configExporter) {
+                              EdgeConfigExporter configExporter,
+                              GetAllEdgesUseCase getAllUseCase) {
         this.registerUseCase = registerUseCase;
         this.deleteUseCase = deleteUseCase;
         this.configExporter = configExporter;
+        this.getAllUseCase = getAllUseCase;
     }
 
     @PostMapping
@@ -45,5 +51,10 @@ public class EdgeRestController {
         deleteUseCase.execute(id);
         // Retornamos un 204 No Content
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Edge>> getAllEdges() {
+        return ResponseEntity.ok(getAllUseCase.execute());
     }
 }

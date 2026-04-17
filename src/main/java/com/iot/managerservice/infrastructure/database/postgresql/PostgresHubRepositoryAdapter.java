@@ -59,4 +59,19 @@ public class PostgresHubRepositoryAdapter implements HubRepository {
                 .map(h -> new HubIdAndVersion(h.getHubId(), h.getMessageId()))
                 .toList();
     }
+
+    @Override
+    public List<HubSettings> findByNetworkId(String networkId) {
+        return jpaHubRepository.findByNetworkId(networkId).stream()
+                .map(e -> new HubSettings(
+                        e.getHubId(), e.getNetworkId(), e.getDeviceName(),
+                        e.getWifiSsid(), e.getWifiPassword(), e.getMqttUri(), e.getSample(),
+                        e.getEnergyMode()
+                )).collect(Collectors.toList());
+    }
+
+    @Override
+    public long countByNetworkId(String networkId) {
+        return jpaHubRepository.countByNetworkId(networkId);
+    }
 }

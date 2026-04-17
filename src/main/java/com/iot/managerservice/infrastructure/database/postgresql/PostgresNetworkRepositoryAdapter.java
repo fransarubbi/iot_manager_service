@@ -59,4 +59,11 @@ public class PostgresNetworkRepositoryAdapter implements NetworkRepository {
             jpaRepository.save(entity);
         });
     }
+
+    @Override
+    public List<Network> findByEdgeId(String edgeId) {
+        return jpaRepository.findByEdgeId(edgeId).stream()
+                .map(e -> new Network(e.getNetworkId(), e.getName(), e.getDescription(), e.getLocation(), e.isActive(), e.getEdgeId()))
+                .collect(Collectors.toList());
+    }
 }
