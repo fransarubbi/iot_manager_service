@@ -19,6 +19,8 @@ target/
 *.iml
 *.ipr
 ca_keys
+**/application-secrets.properties
+edge_configs/
 
 ### NetBeans ###
 /nbproject/private/
@@ -32,3 +34,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
+
