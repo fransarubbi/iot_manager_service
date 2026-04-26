@@ -8,7 +8,13 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
+/**
+ * Adaptador impulsado por JPA para la persistencia del sistema de notificaciones y alertas.
+ * <p>
+ * Implementa el puerto {@link NotificationRepository}, separando el almacenamiento
+ * transaccional de los eventos de la lógica de negocio que decide cuándo generarlos.
+ * </p>
+ */
 @Repository
 public class PostgresNotificationRepositoryAdapter implements NotificationRepository {
 

@@ -7,12 +7,26 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.zip.*;
 
-
+/**
+ * Adaptador de infraestructura (Salida) responsable de la exportación de configuraciones estáticas.
+ * <p>
+ * Implementa el puerto {@link EdgeConfigExporter}. Su función principal es traducir los parámetros
+ * operativos de un dispositivo Edge (dictados por la capa de dominio) hacia archivos físicos
+ * en formato TOML (generando {@code system.toml} y {@code protocol.toml}).
+ * </p>
+ */
 @Component
 public class TomlEdgeConfigAdapter implements EdgeConfigExporter {
 
     private static final String CONFIG_BASE_DIR = "edge_configs";
 
+    /**
+     * Escribe la configuración en disco creando una estructura de directorios aislada para el Edge.
+     * Transforma los atributos del modelo de dominio a formato TOML.
+     *
+     * @param edge Objeto de dominio con la parametrización de red y comportamiento.
+     * @throws RuntimeException Si ocurren problemas de permisos o escritura en el disco.
+     */
     @Override
     public void generateConfiguration(Edge edge) {
         try {
@@ -66,6 +80,14 @@ public class TomlEdgeConfigAdapter implements EdgeConfigExporter {
         }
     }
 
+    /**
+     * Comprime la carpeta de configuración generada previamente en un archivo ZIP.
+     * Este artefacto es el que finalmente se descargará.
+     *
+     * @param edgeId Identificador único del dispositivo Edge.
+     * @return Arreglo de bytes que representa el contenido del archivo ZIP.
+     * @throws RuntimeException Si ocurre un error al leer los archivos o construir el ZIP.
+     */
     @Override
     public byte[] getZipConfiguration(String edgeId) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -87,6 +109,12 @@ public class TomlEdgeConfigAdapter implements EdgeConfigExporter {
         return baos.toByteArray();
     }
 
+    /**
+     * Elimina recursivamente el directorio temporal de configuración de un Edge
+     * para liberar espacio en el sistema de archivos tras una descarga o eliminación exitosa.
+     *
+     * @param edgeId Identificador lógico del Edge cuyos archivos temporales serán borrados.
+     */
     @Override
     public void deleteConfiguration(String edgeId) {
         try {

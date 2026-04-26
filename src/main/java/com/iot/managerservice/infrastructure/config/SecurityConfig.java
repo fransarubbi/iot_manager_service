@@ -8,25 +8,43 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 
+
+/**
+ * Configuración central de seguridad de la aplicación basada en Spring Security.
+ * <p>
+ * Define las políticas de firewall a nivel de aplicación, estableciendo qué endpoints
+ * son públicos y cuáles requieren autorización. Está diseñada para soportar un entorno
+ * mixto: tráfico gRPC libre y tráfico REST protegido por tokens JWT para interfaces administrativas.
+ * </p>
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+    /**
+     * Construye y configura la cadena de filtros de seguridad HTTP.
+     * <ul>
+     * <li>Deshabilita CSRF al ser una API Stateless.</li>
+     * <li>Permite las solicitudes preflight (OPTIONS) para habilitar peticiones CORS de navegadores.</li>
+     * <li>Permite el acceso libre a los canales de comunicación gRPC ({@code /api/grpc/**}).</li>
+     * <li>Asegura que cualquier consulta a los endpoints de gestión ({@code /api/**}) contenga un Bearer Token válido.</li>
+     * </ul>
+     *
+     * @param http El constructor de seguridad HTTP proveído por Spring.
+     * @return La cadena de filtros configurada lista para ser registrada.
+     * @throws Exception Si ocurre un error de configuración interna.
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors(org.springframework.security.config.Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // 1. Dejar pasar el Preflight (OPTIONS)
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // 2. Dejar pasar gRPC
                         .requestMatchers("/api/grpc/**").permitAll()
-                        // 3. Proteger endpoints del frontend
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
                 )
-                // Spring leerá el jwk-set-uri y jws-algorithms del application.properties automáticamente
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(org.springframework.security.config.Customizer.withDefaults()));
 
         return http.build();

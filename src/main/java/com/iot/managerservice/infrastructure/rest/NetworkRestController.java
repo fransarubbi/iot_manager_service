@@ -11,7 +11,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-
+/**
+ * Controlador REST (Adaptador Primario/Entrada) encargado de la topología lógica de la infraestructura IoT.
+ * <p>
+ * Provee los endpoints para orquestar el ciclo de vida (CRUD) de las Redes, permitiendo
+ * agrupar lógicamente a los Hubs bajo la administración de un dispositivo Edge controlador.
+ * </p>
+ */
 @RestController
 @RequestMapping("/api/networks")
 public class NetworkRestController {

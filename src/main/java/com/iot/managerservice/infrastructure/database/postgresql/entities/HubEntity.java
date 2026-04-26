@@ -3,6 +3,14 @@ package com.iot.managerservice.infrastructure.database.postgresql.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Entidad JPA que mapea la tabla {@code hubs} en PostgreSQL.
+ * <p>
+ * Almacena tanto la configuración operativa (redes Wi-Fi, MQTT, tiempos de muestreo)
+ * que el Hub necesita para funcionar, como un registro crucial del estado de sincronización
+ * ({@code message_id}).
+ * </p>
+ */
 @Entity
 @Table(name = "hubs")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor

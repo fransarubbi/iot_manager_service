@@ -10,7 +10,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-
+/**
+ * Controlador REST (Adaptador de Entrada/Primario) para la orquestación del ciclo de vida de los Edges.
+ * <p>
+ * Define la interfaz HTTP (API) utilizada por el dashboard administrativo para añadir nuevos
+ * nodos principales a la topología, visualizar los existentes, forzar su eliminación
+ * o descargar sus artefactos estáticos preconfigurados.
+ * </p>
+ */
 @RestController
 @RequestMapping("/api/edges")
 public class EdgeRestController {

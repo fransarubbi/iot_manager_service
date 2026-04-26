@@ -33,12 +33,22 @@ import java.security.spec.ECGenParameterSpec;
 import java.util.Date;
 
 
+/**
+ * Adaptador de infraestructura que implementa el puerto de dominio {@link CertificateFactory}.
+ * <p>
+ * Utiliza la librería criptográfica Bouncy Castle para la generación de claves y la emisión
+ * de certificados X.509. Emplea algoritmos de Curva Elíptica (ECDSA), que ofrecen un alto
+ * nivel de seguridad con claves muy pequeñas, ideal para dispositivos con recursos limitados
+ * (como los microcontroladores ESP32 de la capa Edge y Hub).
+ * </p>
+ */
 @Slf4j
 @Component
 public class BouncyCastleEcdsaFactoryAdapter implements CertificateFactory {
 
     private final PrivateKey caPrivateKey;
     private final X509Certificate caCertificate;
+
 
     public BouncyCastleEcdsaFactoryAdapter(
             @Value("${ca.cert.path:ca_keys/manager_ca.crt}") String certPath,
@@ -86,6 +96,16 @@ public class BouncyCastleEcdsaFactoryAdapter implements CertificateFactory {
         }
     }
 
+    /**
+     * Implementación principal de la creación de certificados.
+     * Ejecuta el flujo completo: generación del par de claves, firma digital utilizando
+     * la clave privada de la Autoridad Certificante (CA) del Manager, e inyección de
+     * las políticas de uso correspondientes.
+     *
+     * @param request La solicitud con los parámetros del dominio (Common Name, Validez, Organización).
+     * @return El material criptográfico generado en formato de texto plano (PEM).
+     * @throws RuntimeException Si ocurre un fallo en los motores criptográficos subyacentes.
+     */
     @Override
     public GeneratedCertificate createCertificate(CertificateRequest request) {
         if (caPrivateKey == null || caCertificate == null) {
@@ -161,6 +181,15 @@ public class BouncyCastleEcdsaFactoryAdapter implements CertificateFactory {
         }
     }
 
+    /**
+     * Convierte un arreglo de bytes en bruto (codificación DER) a su representación en formato PEM
+     * (texto en base64 envuelto en cabeceras legibles).
+     *
+     * @param type El tipo de bloque PEM (ej. "CERTIFICATE", "EC PRIVATE KEY").
+     * @param data Los datos binarios criptográficos.
+     * @return Una cadena de texto formateada según el estándar PEM.
+     * @throws Exception Si falla el proceso de escritura o serialización.
+     */
     private String toPem(String type, byte[] data) throws Exception {
         StringWriter sw = new StringWriter();
         try (PemWriter pw = new PemWriter(sw)) {

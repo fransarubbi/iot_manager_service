@@ -10,7 +10,15 @@ import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
 import lombok.extern.slf4j.Slf4j;
 
-
+/**
+ * Controlador y Adaptador de Entrada (Driving Adapter) primario para el protocolo gRPC.
+ * <p>
+ * Actúa como el servidor central oyente de la red. Hereda de la base autogenerada por Protobuf
+ * ({@code ManagerServiceImplBase}) para aceptar y mantener conexiones de streaming bidireccional
+ * desde el Router. Su responsabilidad fundamental es interceptar los paquetes en crudo,
+ * transformarlos al lenguaje de dominio y disparar los Casos de Uso pertinentes.
+ * </p>
+ */
 @Slf4j
 @GrpcService
 public class GrpcController extends ManagerServiceGrpc.ManagerServiceImplBase {

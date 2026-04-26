@@ -9,6 +9,15 @@ import java.time.Instant;
 import lombok.extern.slf4j.Slf4j;
 
 
+/**
+ * Caso de Uso orquestador para las mutaciones en la topología lógica de la infraestructura IoT.
+ * <p>
+ * Centraliza la lógica para la creación, actualización y eliminación de redes. Su responsabilidad
+ * principal es garantizar la consistencia entre el estado del servidor central (PostgreSQL) y
+ * el estado físico de la red, enviando notificaciones de actualización en tiempo real hacia el
+ * hardware (mediante gRPC) cada vez que ocurre un cambio.
+ * </p>
+ */
 @Slf4j
 @Service
 public class ManageNetworkUseCase {

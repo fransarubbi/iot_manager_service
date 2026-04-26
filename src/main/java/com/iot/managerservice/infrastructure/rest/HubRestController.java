@@ -8,6 +8,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Controlador REST (Adaptador Primario/Entrada) para la gestión de los dispositivos Hubs.
+ * <p>
+ * Expone la API HTTP consumida por el panel de administración web para visualizar
+ * los Hubs desplegados en una red específica y para forzar la actualización remota
+ * de su configuración operativa (como credenciales Wi-Fi o parámetros de muestreo).
+ * </p>
+ */
 @RestController
 @RequestMapping("/api/hubs")
 public class HubRestController {

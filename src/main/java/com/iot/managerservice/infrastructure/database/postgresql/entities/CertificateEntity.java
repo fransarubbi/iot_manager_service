@@ -5,6 +5,15 @@ import jakarta.persistence.*;
 import lombok.*;
 
 
+/**
+ * Entidad JPA que mapea la persistencia de los certificados criptográficos en PostgreSQL.
+ * <p>
+ * Representa la tabla {@code certificates}. Esta clase se utiliza exclusivamente en la capa
+ * de infraestructura para convertir los registros de la base de datos en objetos de Java,
+ * y posteriormente ser transformados a la entidad de dominio {@link com.iot.managerservice.domain.model.CertificateData}
+ * mediante un mapeador (Mapper).
+ * </p>
+ */
 @Entity
 @Table(name = "certificates")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor

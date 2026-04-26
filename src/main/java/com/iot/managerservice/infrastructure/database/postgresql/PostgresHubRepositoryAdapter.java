@@ -11,7 +11,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-
+/**
+ * Implementación del puerto de persistencia {@link HubRepository} basada en PostgreSQL.
+ * <p>
+ * Este adaptador se encarga no solo de guardar la configuración de conectividad de los Hubs,
+ * sino también de registrar y actualizar la marca de tiempo o ID del último mensaje
+ * procesado, facilitando el control de concurrencia y el orden de los eventos gRPC.
+ * </p>
+ */
 @Slf4j
 @Repository
 public class PostgresHubRepositoryAdapter implements HubRepository {

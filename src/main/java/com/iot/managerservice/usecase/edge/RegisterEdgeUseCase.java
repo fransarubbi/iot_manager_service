@@ -7,7 +7,18 @@ import com.iot.managerservice.infrastructure.cache.EdgeValidationCache;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
+/**
+ * Caso de Uso responsable del alta y provisión inicial de un nuevo dispositivo Edge.
+ * <p>
+ * Orquesta un flujo de registro de tres fases para asegurar que el nodo principal
+ * quede completamente operativo en el sistema:
+ * <ol>
+ * <li>Delega la persistencia permanente al repositorio (base de datos).</li>
+ * <li>Actualiza la caché en memoria RAM para autorizar de forma inmediata futuras conexiones mTLS/gRPC entrantes.</li>
+ * <li>Instruye al exportador a compilar los parámetros físicos (archivos TOML) que el dispositivo necesitará descargar para arrancar.</li>
+ * </ol>
+ * </p>
+ */
 @Service
 public class RegisterEdgeUseCase {
 

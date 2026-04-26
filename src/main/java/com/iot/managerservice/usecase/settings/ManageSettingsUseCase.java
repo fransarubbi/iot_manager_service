@@ -10,6 +10,17 @@ import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 
 
+/**
+ * Caso de Uso crítico para el procesamiento de estado proveniente de los Hubs.
+ * <p>
+ * Maneja los flujos de datos ascendentes (del hardware al servidor). Utiliza un mecanismo
+ * de caché atómico ({@link com.iot.managerservice.infrastructure.cache.HubVersionCache})
+ * para garantizar la idempotencia de las operaciones, evaluando si el mensaje entrante es
+ * nuevo, una actualización válida, un duplicado o está obsoleto.
+ * Dependiendo del resultado, actualiza la base de datos y responde al hardware con un
+ * Acuse de Recibo (ACK).
+ * </p>
+ */
 @Slf4j
 @Service
 public class ManageSettingsUseCase {

@@ -5,7 +5,14 @@ import com.iot.managerservice.domain.repository.NetworkRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
-
+/**
+ * Caso de Uso destinado a la consulta detallada de la topología de red.
+ * <p>
+ * Provee un mecanismo de solo lectura para obtener las entidades puras y completas
+ * de las Redes lógicas que se encuentran bajo la administración directa de un
+ * dispositivo Edge específico.
+ * </p>
+ */
 @Service
 public class GetFullNetworksByEdgeUseCase {
 

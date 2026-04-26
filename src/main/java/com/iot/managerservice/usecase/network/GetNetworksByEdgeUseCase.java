@@ -7,7 +7,15 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
+/**
+ * Caso de Uso de proyección de datos orientado a la visualización de la topología.
+ * <p>
+ * A diferencia de la consulta completa, este servicio construye un objeto de resumen
+ * ({@link NetworkSummary}) ideal para la interfaz de usuario.
+ * Orquesta consultas a múltiples repositorios para enriquecer los datos de la red
+ * con métricas operativas, como la cantidad total de dispositivos Hubs conectados.
+ * </p>
+ */
 @Service
 public class GetNetworksByEdgeUseCase {
 

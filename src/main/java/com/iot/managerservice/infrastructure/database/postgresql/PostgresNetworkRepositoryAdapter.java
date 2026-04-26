@@ -1,6 +1,5 @@
 package com.iot.managerservice.infrastructure.database.postgresql;
 
-
 import com.iot.managerservice.domain.model.Network;
 import com.iot.managerservice.domain.repository.NetworkRepository;
 import com.iot.managerservice.infrastructure.database.postgresql.entities.NetworkEntity;
@@ -11,6 +10,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Adaptador de base de datos relacional para gestionar las agrupaciones lógicas de red (Networks).
+ * <p>
+ * Conecta los requerimientos del dominio (puerto {@link NetworkRepository}) con
+ * las capacidades de consulta de Spring Data JPA.
+ * </p>
+ */
 @Repository
 public class PostgresNetworkRepositoryAdapter implements NetworkRepository {
 

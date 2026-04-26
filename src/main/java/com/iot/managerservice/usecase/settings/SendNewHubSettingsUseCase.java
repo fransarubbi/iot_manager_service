@@ -8,7 +8,17 @@ import com.iot.managerservice.domain.repository.NetworkRepository;
 import com.iot.managerservice.infrastructure.cache.PendingSettingsCache;
 import org.springframework.stereotype.Service;
 
-
+/**
+ * Caso de Uso responsable de iniciar la actualización asíncrona de configuraciones en los dispositivos Hub.
+ * <p>
+ * Este servicio de la capa de aplicación orquesta la preparación y el despacho de nuevos
+ * parámetros operativos (como credenciales Wi-Fi o tiempos de muestreo) hacia el hardware.
+ * Debido a la naturaleza eventual de la red gRPC, este proceso no aplica los cambios
+ * directamente en la base de datos; en su lugar, calcula el siguiente identificador de mensaje válido,
+ * deposita la configuración en una memoria caché de "tránsito" ({@link PendingSettingsCache})
+ * y delega el envío físico al puerto de comunicación gRPC.
+ * </p>
+ */
 @Service
 public class SendNewHubSettingsUseCase {
 
@@ -25,6 +35,19 @@ public class SendNewHubSettingsUseCase {
         this.grpcSender = grpcSender;
     }
 
+    /**
+     * Ejecuta el flujo de envío de una nueva parametrización hacia un Hub.
+     * <ol>
+     * <li>Valida la existencia del Hub en el sistema.</li>
+     * <li>Calcula el {@code newMsgId} incrementando en 1 la versión del último mensaje conocido, garantizando el orden y la idempotencia.</li>
+     * <li>Almacena la intención de cambio en la caché temporal a la espera del Acuse de Recibo (ACK) del dispositivo.</li>
+     * <li>Enruta el comando a través del dispositivo Edge administrador de la red a la que pertenece el Hub.</li>
+     * </ol>
+     *
+     * @param hubId       El identificador lógico del Hub que recibirá los nuevos ajustes.
+     * @param newSettings El modelo de dominio que contiene los nuevos parámetros a aplicar.
+     * @throws IllegalArgumentException Si el Hub solicitado o la red a la que pertenece no se encuentran registrados en el sistema.
+     */
     public void execute(String hubId, HubSettings newSettings) {
         HubSettings currentHub = hubRepository.findById(hubId)
                 .orElseThrow(() -> new IllegalArgumentException("Hub no encontrado"));

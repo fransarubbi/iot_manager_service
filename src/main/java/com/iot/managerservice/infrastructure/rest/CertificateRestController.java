@@ -11,7 +11,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-
+/**
+ * Controlador REST (Adaptador de Entrada/Primario) orientado a la administración criptográfica de la red.
+ * <p>
+ * Expone endpoints HTTP (protegidos por JWT) para que la interfaz de usuario web interactúe
+ * con la PKI de la aplicación. Delega a los Casos de Uso el listado, revocación y la
+ * emisión de material mTLS nuevo.
+ * </p>
+ */
 @RestController
 @RequestMapping("/api/certificates")
 public class CertificateRestController {

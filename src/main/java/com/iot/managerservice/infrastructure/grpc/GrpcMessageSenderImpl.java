@@ -12,7 +12,13 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
 
-
+/**
+ * Adaptador de infraestructura (Salida) para el envío asíncrono de mensajes gRPC descendentes.
+ * <p>
+ * Implementa el puerto {@link GrpcMessageSender}. Dado que gRPC utiliza streams persistentes,
+ * este componente retiene el {@link StreamObserver} de salida hacia el Router.
+ * </p>
+ */
 @Slf4j
 @Component
 public class GrpcMessageSenderImpl implements GrpcMessageSender {

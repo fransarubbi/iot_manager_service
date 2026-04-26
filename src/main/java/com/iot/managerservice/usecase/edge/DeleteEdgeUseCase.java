@@ -7,7 +7,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
-
+/**
+ * Caso de Uso para gestionar la baja o desmantelamiento de un dispositivo Edge.
+ * <p>
+ * Coordina la eliminación segura de todos los rastros del dispositivo en la infraestructura del Manager.
+ * Para mantener la consistencia del sistema, este proceso retira el registro de la persistencia,
+ * revoca el acceso en la caché gRPC y purga los artefactos estáticos generados previamente.
+ * </p>
+ */
 @Slf4j
 @Service
 public class DeleteEdgeUseCase {

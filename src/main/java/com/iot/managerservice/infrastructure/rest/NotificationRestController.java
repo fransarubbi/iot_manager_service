@@ -6,7 +6,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
-
+/**
+ * Controlador REST (Adaptador Primario/Entrada) para el sistema de alertas y eventos.
+ * <p>
+ * Actúa como la bandeja de entrada para el dashboard administrativo, permitiendo
+ * leer las notificaciones pendientes y descartarlas una vez gestionadas.
+ * </p>
+ */
 @RestController
 @RequestMapping("/api/notifications")
 public class NotificationRestController {

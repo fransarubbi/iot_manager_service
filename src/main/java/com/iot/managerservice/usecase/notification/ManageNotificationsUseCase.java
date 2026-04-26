@@ -6,7 +6,14 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 
-
+/**
+ * Caso de Uso central para la orquestación del sistema de alertas y eventos del Manager.
+ * <p>
+ * Centraliza la lógica de negocio responsable de emitir nuevas advertencias, listar la bandeja
+ * de eventos críticos y permitir la manipulación del estado de estas notificaciones por parte
+ * de los operadores del sistema.
+ * </p>
+ */
 @Service
 public class ManageNotificationsUseCase {
 

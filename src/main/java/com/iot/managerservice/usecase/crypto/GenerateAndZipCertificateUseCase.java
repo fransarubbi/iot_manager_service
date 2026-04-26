@@ -16,7 +16,17 @@ import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-
+/**
+ * Caso de Uso responsable de la emisión, registro y empaquetado de nuevas credenciales mTLS.
+ * <p>
+ * Este servicio de aplicación orquesta un flujo complejo:
+ * <ol>
+ * <li>Invoca a la fábrica criptográfica (puerto) para generar un par de claves ECDSA y un certificado X.509.</li>
+ * <li>Calcula las fechas de validez y registra el nuevo certificado en el sistema de persistencia (puerto) para su monitoreo.</li>
+ * <li>Empaqueta la clave privada generada, el certificado público y la clave pública raíz (Manager CA) en un archivo ZIP listo para ser inyectado en el hardware.</li>
+ * </ol>
+ * </p>
+ */
 @Service
 public class GenerateAndZipCertificateUseCase {
 

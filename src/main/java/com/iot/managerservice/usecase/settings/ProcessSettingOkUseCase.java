@@ -7,7 +7,16 @@ import com.iot.managerservice.usecase.notification.ManageNotificationsUseCase;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 
-
+/**
+ * Caso de Uso para el cierre del ciclo de configuración asíncrona.
+ * <p>
+ * Cuando un administrador envía nuevos ajustes a un Hub, estos quedan en estado "pendiente".
+ * Este servicio procesa la respuesta definitiva del microcontrolador (confirmando si logró
+ * aplicar los cambios de Wi-Fi, MQTT, etc. o si falló). Si el cambio fue exitoso, persiste
+ * los datos finales y actualiza las versiones; en cualquier caso, emite una notificación
+ * al sistema de alertas operativas.
+ * </p>
+ */
 @Slf4j
 @Service
 public class ProcessSettingOkUseCase {
