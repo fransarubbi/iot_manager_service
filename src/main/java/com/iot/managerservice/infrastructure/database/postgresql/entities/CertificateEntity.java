@@ -3,6 +3,7 @@ package com.iot.managerservice.infrastructure.database.postgresql.entities;
 import com.iot.managerservice.domain.model.DeviceType;
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.Instant;
 
 
 /**
@@ -22,26 +23,25 @@ public class CertificateEntity {
     @Column(name = "id")
     private String id;
 
-    @Column(name = "display_name")
+    @Column(name = "display_name", nullable = false)
     private String displayName;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "device_type")
+    @Column(name = "device_type", nullable = false)
     private DeviceType deviceType;
 
-    @Column(name = "status")
+    @Column(name = "status", nullable = false)
     private String status;
 
-    @Column(name = "emission_date")
-    private long emissionDate;
+    @Column(name = "emission_date", nullable = false)
+    private Instant emissionDate;
 
-    @Column(name = "expiration_date")
-    private long expirationDate;
+    @Column(name = "expiration_date", nullable = false)
+    private Instant expirationDate;
 
-    // Usamos TEXT porque los PEM son strings largos
-    @Column(name = "private_key_pem", columnDefinition = "TEXT")
+    @Column(name = "private_key_pem", columnDefinition = "TEXT", nullable = false)
     private String privateKeyPem;
 
-    @Column(name = "certificate_pem", columnDefinition = "TEXT")
+    @Column(name = "certificate_pem", columnDefinition = "TEXT", nullable = false)
     private String certificatePem;
 }

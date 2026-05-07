@@ -19,18 +19,18 @@ public class NetworkEntity {
     @Column(name = "network_id")
     private String networkId;
 
-    @Column(name = "name")
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "description")
+    @Column(name = "description", nullable = false)
     private String description;
 
-    @Column(name = "location")
+    @Column(name = "location", nullable = false)
     private String location;
 
-    @Column(name = "active")
+    @Column(name = "active", nullable = false)
     private boolean active;
 
-    @Column(name = "edge_id")
+    @Column(name = "edge_id", nullable = false)
     private String edgeId;
 }

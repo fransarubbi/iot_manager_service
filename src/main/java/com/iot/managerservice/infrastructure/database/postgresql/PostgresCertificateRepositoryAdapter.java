@@ -7,6 +7,7 @@ import com.iot.managerservice.infrastructure.database.postgresql.repositories.Jp
 import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.time.Instant;
 
 
 /**
@@ -36,13 +37,16 @@ public class PostgresCertificateRepositoryAdapter implements CertificateReposito
      * Persiste un nuevo certificado en la base de datos.
      * <p>Realiza el mapeo directo de los campos del registro de dominio hacia la entidad JPA.</p>
      *
-     * @param c El objeto de dominio que representa los datos del certificado.
+     * @param cert El objeto de dominio que representa los datos del certificado.
      */
     @Override
-    public void save(CertificateData c) {
+    public void save(CertificateData cert) {
         CertificateEntity entity = new CertificateEntity(
-                c.id(), c.displayName(), c.deviceType(), c.status(),
-                c.emissionDate(), c.expirationDate(), c.privateKeyPem(), c.certificatePem()
+                cert.id(), cert.displayName(), cert.deviceType(),
+                "ACTIVE",
+                Instant.ofEpochSecond(cert.emissionDate()),
+                Instant.ofEpochSecond(cert.expirationDate()),
+                cert.privateKeyPem(), cert.certificatePem()
         );
         jpaRepository.save(entity);
     }
@@ -56,8 +60,8 @@ public class PostgresCertificateRepositoryAdapter implements CertificateReposito
     public List<CertificateData> findAll() {
         return jpaRepository.findByStatus("VALID").stream()
                 .map(e -> new CertificateData(e.getId(), e.getDisplayName(),
-                        e.getDeviceType(), e.getStatus(), e.getEmissionDate(),
-                        e.getExpirationDate(), e.getPrivateKeyPem(), e.getCertificatePem()))
+                        e.getDeviceType(), e.getStatus(), e.getEmissionDate().getEpochSecond(),
+                        e.getExpirationDate().getEpochSecond(), e.getPrivateKeyPem(), e.getCertificatePem()))
                 .collect(Collectors.toList());
     }
 

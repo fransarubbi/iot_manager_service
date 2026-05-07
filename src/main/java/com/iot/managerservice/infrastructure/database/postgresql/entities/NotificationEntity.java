@@ -2,6 +2,7 @@ package com.iot.managerservice.infrastructure.database.postgresql.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.Instant;
 
 /**
  * Entidad JPA que representa la tabla {@code notifications} en la base de datos.
@@ -30,5 +31,5 @@ public class NotificationEntity {
     private boolean active = true;
 
     @Column(name = "created_at")
-    private long createdAt;
+    private Instant createdAt;
 }

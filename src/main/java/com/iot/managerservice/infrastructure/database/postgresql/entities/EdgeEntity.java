@@ -20,57 +20,57 @@ public class EdgeEntity {
     @Column(name = "edge_id")
     private String edgeId;
 
-    @Column(name = "name")
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "location")
+    @Column(name = "location", nullable = false)
     private String location;
 
-    @Column(name = "cn")
+    @Column(name = "cn", nullable = false)
     private String cn;
 
-    @Column(name = "host_server")
+    @Column(name = "host_server", nullable = false)
     private String hostServer;
 
-    @Column(name = "host_port")
+    @Column(name = "host_port", nullable = false)
     private Integer hostPort;
 
-    @Column(name = "host_local")
+    @Column(name = "host_local", nullable = false)
     private String hostLocal;
 
-    @Column(name = "data_base_path")
+    @Column(name = "data_base_path", nullable = false)
     private String dataBasePath;
 
-    @Column(name = "buffer_length")
+    @Column(name = "buffer_length", nullable = false)
     private Integer bufferLength;
 
-    @Column(name = "log_level")
+    @Column(name = "log_level", nullable = false)
     private String logLevel;
 
-    @Column(name = "max_number_handshake_attempts")
+    @Column(name = "max_number_handshake_attempts", nullable = false)
     private Integer maxNumberHandshakeAttempts;
 
-    @Column(name = "frequency_messages_phase")
+    @Column(name = "frequency_messages_phase", nullable = false)
     private Integer frequencyMessagesPhase;
 
-    @Column(name = "frequency_messages_safemode")
+    @Column(name = "frequency_messages_safemode", nullable = false)
     private Integer frequencyMessagesSafeMode;
 
-    @Column(name = "handshake_time_limit")
+    @Column(name = "handshake_time_limit", nullable = false)
     private Integer handshakeTimeLimit;
 
-    @Column(name = "phase_time_limit")
+    @Column(name = "phase_time_limit", nullable = false)
     private Integer phaseTimeLimit;
 
-    @Column(name = "safemode_time_limit")
+    @Column(name = "safemode_time_limit", nullable = false)
     private Integer safeModeTimeLimit;
 
-    @Column(name = "heartbeat_balancemode_time")
+    @Column(name = "heartbeat_balancemode_time", nullable = false)
     private Integer heartbeatBalanceModeTime;
 
-    @Column(name = "heartbeat_normal_time")
+    @Column(name = "heartbeat_normal_time", nullable = false)
     private Integer heartbeatNormalTime;
 
-    @Column(name = "heartbeat_safemode_time")
+    @Column(name = "heartbeat_safemode_time", nullable = false)
     private Integer heartbeatSafeModeTime;
 }

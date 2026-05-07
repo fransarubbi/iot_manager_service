@@ -7,6 +7,7 @@ import com.iot.managerservice.infrastructure.database.postgresql.repositories.Jp
 import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.time.Instant;
 
 /**
  * Adaptador impulsado por JPA para la persistencia del sistema de notificaciones y alertas.
@@ -30,14 +31,14 @@ public class PostgresNotificationRepositoryAdapter implements NotificationReposi
         entity.setType(n.type());
         entity.setDescription(n.description());
         entity.setActive(n.active());
-        entity.setCreatedAt(n.createdAt());
+        entity.setCreatedAt(Instant.ofEpochMilli(n.createdAt()));
         jpaRepository.save(entity);
     }
 
     @Override
     public List<Notification> findActive() {
         return jpaRepository.findByActiveTrue().stream()
-                .map(e -> new Notification(e.getId(), e.getType(), e.getDescription(), e.isActive(), e.getCreatedAt()))
+                .map(e -> new Notification(e.getId(), e.getType(), e.getDescription(), e.isActive(), e.getCreatedAt().toEpochMilli()))
                 .collect(Collectors.toList());
     }
 

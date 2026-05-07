@@ -19,7 +19,7 @@ public class HubEntity {
     @Column(name = "hub_id")
     private String hubId;
 
-    @Column(name = "network_id")
+    @Column(name = "network_id", nullable = false)
     private String networkId;
 
     @Column(name = "device_name")
