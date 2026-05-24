@@ -20,6 +20,7 @@ import org.bouncycastle.util.io.pem.PemWriter;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import lombok.extern.slf4j.Slf4j;
@@ -124,18 +125,32 @@ public class BouncyCastleEcdsaFactoryAdapter implements CertificateFactory {
             BigInteger serialNumber = new BigInteger(160, new SecureRandom());
 
             X509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(
-                    new X500Name(caCertificate.getSubjectX500Principal().getName()),
+                    X500Name.getInstance(caCertificate.getSubjectX500Principal().getEncoded()),
                     serialNumber, startDate, endDate, subject, deviceKeyPair.getPublic()
             );
 
             applyExtensions(certBuilder, request.deviceType(), request.sanDomain());
+
+            JcaX509ExtensionUtils extUtils = new JcaX509ExtensionUtils();
+
+            certBuilder.addExtension(
+                    Extension.subjectKeyIdentifier,
+                    false,
+                    extUtils.createSubjectKeyIdentifier(deviceKeyPair.getPublic())
+            );
+
+            certBuilder.addExtension(
+                    Extension.authorityKeyIdentifier,
+                    false, 
+                    extUtils.createAuthorityKeyIdentifier(caCertificate.getPublicKey())
+            );
 
             ContentSigner signer = new JcaContentSignerBuilder("SHA256withECDSA").build(caPrivateKey);
             X509CertificateHolder certHolder = certBuilder.build(signer);
             X509Certificate signedCert = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder);
 
             return new GeneratedCertificate(
-                    toPem("EC PRIVATE KEY", deviceKeyPair.getPrivate().getEncoded()),
+                    toPem("PRIVATE KEY", deviceKeyPair.getPrivate().getEncoded()),
                     toPem("CERTIFICATE", signedCert.getEncoded())
             );
 

@@ -43,7 +43,7 @@ public class PostgresCertificateRepositoryAdapter implements CertificateReposito
     public void save(CertificateData cert) {
         CertificateEntity entity = new CertificateEntity(
                 cert.id(), cert.displayName(), cert.deviceType(),
-                "ACTIVE",
+                "VALID",
                 Instant.ofEpochSecond(cert.emissionDate()),
                 Instant.ofEpochSecond(cert.expirationDate()),
                 cert.privateKeyPem(), cert.certificatePem()
@@ -51,17 +51,19 @@ public class PostgresCertificateRepositoryAdapter implements CertificateReposito
         jpaRepository.save(entity);
     }
 
-    /**
-     * Recupera exclusivamente los certificados que se encuentran en estado operativo válido.
-     *
-     * @return Lista de certificados mapeados de vuelta al modelo de dominio.
-     */
     @Override
     public List<CertificateData> findAll() {
-        return jpaRepository.findByStatus("VALID").stream()
-                .map(e -> new CertificateData(e.getId(), e.getDisplayName(),
-                        e.getDeviceType(), e.getStatus(), e.getEmissionDate().getEpochSecond(),
-                        e.getExpirationDate().getEpochSecond(), e.getPrivateKeyPem(), e.getCertificatePem()))
+        return jpaRepository.findAll().stream()
+                .map(e -> new CertificateData(
+                        e.getId(),
+                        e.getDisplayName(),
+                        e.getDeviceType(),
+                        e.getStatus(),
+                        e.getEmissionDate().getEpochSecond(),
+                        e.getExpirationDate().getEpochSecond(),
+                        e.getPrivateKeyPem(),
+                        e.getCertificatePem()
+                ))
                 .collect(Collectors.toList());
     }
 
