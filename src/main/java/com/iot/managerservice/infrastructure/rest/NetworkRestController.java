@@ -5,6 +5,7 @@ import com.iot.managerservice.domain.model.NetworkSummary;
 import com.iot.managerservice.usecase.network.GetFullNetworksByEdgeUseCase;
 import com.iot.managerservice.usecase.network.GetNetworksByEdgeUseCase;
 import com.iot.managerservice.usecase.network.ManageNetworkUseCase;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,7 @@ import java.util.List;
  * agrupar lógicamente a los Hubs bajo la administración de un dispositivo Edge controlador.
  * </p>
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/networks")
 public class NetworkRestController {
@@ -36,6 +38,7 @@ public class NetworkRestController {
 
     @PostMapping
     public ResponseEntity<Void> createNetwork(@RequestBody Network network) {
+        log.info("Petición REST: creando red con id {}", network.networkId());
         manageNetworkUseCase.createNetwork(network);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
@@ -43,6 +46,7 @@ public class NetworkRestController {
     // PATCH es el método HTTP correcto para modificaciones parciales
     @PatchMapping("/{id}/update")
     public ResponseEntity<Void> updateNetwork(@PathVariable String id) {
+        log.info("Petición REST: actualizando la red con id {}", id);
         manageNetworkUseCase.updateNetwork(id);
         return ResponseEntity.ok().build();
     }
@@ -50,6 +54,7 @@ public class NetworkRestController {
     // DELETE para el borrado total
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteNetwork(@PathVariable String id) {
+        log.info("Petición REST: eliminando la red con id {}", id);
         manageNetworkUseCase.deleteNetwork(id);
         return ResponseEntity.noContent().build(); // 204 No Content
     }
@@ -57,6 +62,7 @@ public class NetworkRestController {
     @GetMapping
     // Ejemplo de uso desde Frontend: GET /api/networks?edgeId=EDGE_1
     public ResponseEntity<List<NetworkSummary>> getNetworks(@RequestParam String edgeId) {
+        log.info("Petición REST: obteniendo las redes del edge con id {}", edgeId);
         List<NetworkSummary> networks = getNetworksByEdgeUseCase.execute(edgeId);
         return ResponseEntity.ok(networks);
     }

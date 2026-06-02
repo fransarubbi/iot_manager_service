@@ -4,6 +4,7 @@ import com.iot.managerservice.domain.model.CertificateData;
 import com.iot.managerservice.domain.model.CertificateRequest;
 import com.iot.managerservice.usecase.crypto.GenerateAndZipCertificateUseCase;
 import com.iot.managerservice.usecase.crypto.ManageCertificatesUseCase;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ import java.util.List;
  * emisión de material mTLS nuevo.
  * </p>
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/certificates")
 public class CertificateRestController {
@@ -38,6 +40,7 @@ public class CertificateRestController {
 
     @PatchMapping("/{id}/revoke")
     public ResponseEntity<Void> revoke(@PathVariable String id) {
+        log.info("Petición REST: revocar certificado");
         manageUseCase.revoke(id);
         return ResponseEntity.noContent().build();
     }

@@ -2,6 +2,7 @@ package com.iot.managerservice.infrastructure.rest;
 
 import com.iot.managerservice.domain.model.Notification;
 import com.iot.managerservice.usecase.notification.ManageNotificationsUseCase;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.List;
  * leer las notificaciones pendientes y descartarlas una vez gestionadas.
  * </p>
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/notifications")
 public class NotificationRestController {
@@ -25,6 +27,7 @@ public class NotificationRestController {
 
     @GetMapping
     public ResponseEntity<List<Notification>> getActive() {
+        log.info("Petición REST: obteniendo las notificaciones activas");
         return ResponseEntity.ok(useCase.getActiveNotifications());
     }
 

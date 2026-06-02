@@ -3,6 +3,7 @@ package com.iot.managerservice.infrastructure.rest;
 import com.iot.managerservice.domain.model.HubSettings;
 import com.iot.managerservice.usecase.hub.GetHubsByNetworkUseCase;
 import com.iot.managerservice.usecase.settings.SendNewHubSettingsUseCase;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +17,7 @@ import java.util.List;
  * de su configuración operativa (como credenciales Wi-Fi o parámetros de muestreo).
  * </p>
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/hubs")
 public class HubRestController {
@@ -32,12 +34,14 @@ public class HubRestController {
     @GetMapping
     // Ejemplo de uso desde Frontend: GET /api/hubs?networkId=RED_A
     public ResponseEntity<List<HubSettings>> getHubsByNetwork(@RequestParam String networkId) {
+        log.info("Petición REST: obteniendo los Hub de la red {}", networkId);
         List<HubSettings> hubs = getHubsUseCase.execute(networkId);
         return ResponseEntity.ok(hubs);
     }
 
     @PutMapping("/{id}/settings")
     public ResponseEntity<Void> sendNewSettings(@PathVariable String id, @RequestBody HubSettings settings) {
+        log.info("Petición REST: enviar nueva configuración al Hub {} de la red {}", id, settings.networkId());
         sendNewHubSettingsUseCase.execute(id, settings);
         return ResponseEntity.accepted().build();
     }

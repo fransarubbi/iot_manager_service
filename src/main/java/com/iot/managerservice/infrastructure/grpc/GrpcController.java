@@ -7,21 +7,17 @@ import com.iot.managerservice.usecase.notification.ManageNotificationsUseCase;
 import com.iot.managerservice.usecase.settings.ManageSettingsUseCase;
 import com.iot.managerservice.usecase.settings.ProcessSettingOkUseCase;
 import io.grpc.stub.StreamObserver;
-import net.devh.boot.grpc.server.service.GrpcService;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.devh.boot.grpc.client.inject.GrpcClient;
+import org.springframework.stereotype.Service;
 
-/**
- * Controlador y Adaptador de Entrada (Driving Adapter) primario para el protocolo gRPC.
- * <p>
- * Actúa como el servidor central oyente de la red. Hereda de la base autogenerada por Protobuf
- * ({@code ManagerServiceImplBase}) para aceptar y mantener conexiones de streaming bidireccional
- * desde el Router. Su responsabilidad fundamental es interceptar los paquetes en crudo,
- * transformarlos al lenguaje de dominio y disparar los Casos de Uso pertinentes.
- * </p>
- */
+
 @Slf4j
-@GrpcService
-public class GrpcController extends ManagerServiceGrpc.ManagerServiceImplBase {
+@Service
+@RequiredArgsConstructor
+public class GrpcController {
 
     private final ManageSettingsUseCase manageSettingsUseCase;
     private final GrpcMessageSenderImpl messageSender;
@@ -29,67 +25,75 @@ public class GrpcController extends ManagerServiceGrpc.ManagerServiceImplBase {
     private final ManageNotificationsUseCase notificationUseCase;
     private final ProcessSettingOkUseCase processSettingOkUseCase;
 
-    public GrpcController(ManageSettingsUseCase manageSettingsUseCase,
-                          GrpcMessageSenderImpl messageSender,
-                          EdgeValidationCache edgeValidationCache,
-                          ManageNotificationsUseCase notificationUseCase,
-                          ProcessSettingOkUseCase processSettingOkUseCase) {
-        this.manageSettingsUseCase = manageSettingsUseCase;
-        this.messageSender = messageSender;
-        this.edgeValidationCache = edgeValidationCache;
-        this.notificationUseCase = notificationUseCase;
-        this.processSettingOkUseCase = processSettingOkUseCase;
+    @GrpcClient("router-client")
+    private ManagerServiceGrpc.ManagerServiceStub asyncStub;
+    private StreamObserver<FromManager> requestObserver;
+
+    @PostConstruct
+    public void startConnection() {
+        connectToRouter();
     }
 
-    @Override
-    public StreamObserver<ToManager> connectStream(StreamObserver<FromManager> responseObserver) {
-
-        log.info("¡El Router ha iniciado la conexión bidireccional!");
-        messageSender.setRouterStream(responseObserver);
-
-        return new StreamObserver<ToManager>() {
+    private void connectToRouter() {
+        log.info("Iniciando conexión gRPC hacia el Router...");
+        requestObserver = asyncStub.connectStream(new StreamObserver<ToManager>() {
 
             @Override
-            public void onNext(ToManager request) {
-                String edgeId = request.getEdgeId();
+            public void onNext(ToManager message) {
+                String edgeId = "";
 
+                switch (message.getPayloadCase()) {
+                    case HELLO_WORLD:
+                        edgeId = message.getHelloWorld().getMetadata().getSenderUserId();
+                        break;
+                    case SETTINGS:
+                        edgeId = message.getSettings().getMetadata().getSenderUserId();
+                        break;
+                    case SETTING_OK:
+                        edgeId = message.getSettingOk().getMetadata().getSenderUserId();
+                        break;
+                    case FIRMWARE_OUTCOME:
+                        edgeId = message.getFirmwareOutcome().getMetadata().getSenderUserId();
+                        break;
+                    default:
+                        log.warn("Mensaje ignorado o sin payload: {}", message.getPayloadCase());
+                        return;
+                }
+
+                // Barrera de Seguridad
                 if (!edgeValidationCache.isValid(edgeId)) {
-                    log.warn("ACCESO DENEGADO: Se recibió un mensaje de un edge_id no registrado ({}). Paquete descartado.", edgeId);
+                    log.warn("ACCESO DENEGADO: Mensaje de un edge con id no registrado ({}).", edgeId);
                     return;
                 }
 
-                switch (request.getPayloadCase()) {
+                // CORRECCIÓN 3: Procesamiento limpio solo con los mensajes entrantes reales
+                switch (message.getPayloadCase()) {
+                    case HELLO_WORLD:
+                        log.info("mensaje HelloWorld recibido de Edge: {}", edgeId);
+                        String hwDesc = "edge_id: " + edgeId
+                                + " timestamp: " + message.getHelloWorld().getMetadata().getTimestamp();
+                        notificationUseCase.createNotification("HELLO_WORLD", hwDesc);
+                        break;
 
                     case SETTINGS:
-                        handleSettings(edgeId, request.getSettings());
+                        handleSettings(edgeId, message.getSettings());
                         break;
 
                     case SETTING_OK:
-                        com.iot.managerservice.application.grpc.generated.SettingOk okMsg = request.getSettingOk();
-                        String targetHubId = okMsg.getMetadata().getSenderUserId();
-                        long msgIdToConfirm = okMsg.getMessageId();
-                        boolean result = true;
-                        String hardwareMsg = "Configuración aplicada en hardware";
-                        log.info("Recibido SettingOk desde el Hub: {}", targetHubId);
-                        processSettingOkUseCase.execute(targetHubId, msgIdToConfirm, result, hardwareMsg);
+                        Long msgId = message.getSettingOk().getMessageId();
+                        log.info("mensaje SettingOk recibido de Edge {}", edgeId);
+                        processSettingOkUseCase.execute(edgeId, msgId, true, "Configuración aplicada en hardware");
                         break;
 
-                    case HELLO_WORLD: {
-                        String description = "edge_id: " + request.getHelloWorld().getMetadata().getSenderUserId()
-                                + "timestamp: " + request.getHelloWorld().getMetadata().getTimestamp();
-                        notificationUseCase.createNotification("HELLO_WORLD", description);
+                    case FIRMWARE_OUTCOME:
+                        log.info("mensaje FirmwareOutcome entrante");
+                        String fwDesc = "edge_id: " + edgeId
+                                + " timestamp: " + message.getFirmwareOutcome().getMetadata().getTimestamp()
+                                + " network_id: " + message.getFirmwareOutcome().getNetwork()
+                                + " is_ok: " + message.getFirmwareOutcome().getIsOk()
+                                + " percentage: " + message.getFirmwareOutcome().getPercentageOk();
+                        notificationUseCase.createNotification("FIRMWARE_OUTCOME", fwDesc);
                         break;
-                    }
-
-                    case FIRMWARE_OUTCOME: {
-                        String description = "edge_id: " + request.getFirmwareOutcome().getMetadata().getSenderUserId()
-                                + "timestamp: " + request.getFirmwareOutcome().getMetadata().getTimestamp()
-                                + "network_id: " + request.getFirmwareOutcome().getNetwork()
-                                + "is_ok: " + request.getFirmwareOutcome().getIsOk()
-                                + "percentage: " + request.getFirmwareOutcome().getPercentageOk();
-                        notificationUseCase.createNotification("FIRMWARE_OUTCOME", description);
-                        break;
-                    }
 
                     case PAYLOAD_NOT_SET:
                         log.warn("Se recibió un paquete vacío desde el Edge: {}", edgeId);
@@ -99,21 +103,20 @@ public class GrpcController extends ManagerServiceGrpc.ManagerServiceImplBase {
 
             @Override
             public void onError(Throwable t) {
-                log.error("El stream con el Router se rompió: {}", t.getMessage());
-                // Por seguridad, desconectamos
+                log.error("El stream con el router se rompió: {}", t.getMessage());
                 messageSender.setRouterStream(null);
+                reconnect();
             }
 
             @Override
             public void onCompleted() {
-                log.info("El Router cerró la conexión.");
+                log.info("El Router cerró la conexión pacíficamente.");
                 messageSender.setRouterStream(null);
-                responseObserver.onCompleted();
+                reconnect();
             }
 
             private void handleSettings(String edgeId, Settings g) {
                 Long messageId = g.getMessageId();
-
                 HubSettings domainSettings = new HubSettings(
                         g.getMetadata().getSenderUserId(),
                         g.getNetwork(),
@@ -124,10 +127,29 @@ public class GrpcController extends ManagerServiceGrpc.ManagerServiceImplBase {
                         g.getSample(),
                         g.getEnergyMode()
                 );
-
-                log.debug("Procesando Settings para Hub: {} (MsgId: {})", edgeId, messageId);
+                log.debug("procesando Settings para Hub: {} (MsgId: {})", edgeId, messageId);
                 manageSettingsUseCase.execute(domainSettings, messageId);
             }
-        };
+        });
+
+        messageSender.setRouterStream(requestObserver);
+        log.info("Túnel gRPC con el Router establecido. Listo para enviar y recibir.");
+    }
+
+    public void sendMessageToRouter(FromManager message) {
+        if (requestObserver != null) {
+            requestObserver.onNext(message);
+        } else {
+            log.error("No se puede enviar el mensaje, el túnel está desconectado.");
+        }
+    }
+
+    private void reconnect() {
+        try {
+            Thread.sleep(5000); // Esperar 5 segundos antes de reintentar
+            connectToRouter();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 }

@@ -5,6 +5,7 @@ import com.iot.managerservice.usecase.edge.GetAllEdgesUseCase;
 import com.iot.managerservice.usecase.edge.RegisterEdgeUseCase;
 import com.iot.managerservice.usecase.edge.DeleteEdgeUseCase;
 import com.iot.managerservice.domain.port.EdgeConfigExporter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +19,7 @@ import java.util.List;
  * o descargar sus artefactos estáticos preconfigurados.
  * </p>
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/edges")
 public class EdgeRestController {
@@ -39,12 +41,14 @@ public class EdgeRestController {
 
     @PostMapping
     public ResponseEntity<Void> create(@RequestBody Edge edge) {
+        log.info("Petición REST: solicitud de creación de edge {}", edge.edgeId());
         registerUseCase.execute(edge);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping("/{id}/download")
     public ResponseEntity<byte[]> downloadConfig(@PathVariable String id) {
+        log.info("Petición REST: descargando la configuración del edge {}", id);
         byte[] zipData = configExporter.getZipConfiguration(id);
 
         return ResponseEntity.ok()
@@ -55,6 +59,7 @@ public class EdgeRestController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable String id) {
+        log.info("Petición REST: eliminando el edge {}", id);
         deleteUseCase.execute(id);
         // Retornamos un 204 No Content
         return ResponseEntity.noContent().build();

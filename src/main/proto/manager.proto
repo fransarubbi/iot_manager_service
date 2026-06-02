@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package iot.grpc_manager;
+package grpc;
 
 option java_package = "com.iot.managerservice.application.grpc.generated";
 option java_multiple_files = true;
@@ -8,7 +8,7 @@ option java_multiple_files = true;
 
 service ManagerService {
   // Streaming Bidireccional
-  rpc ConnectStream(stream ToManager) returns (stream FromManager);
+  rpc ConnectStream(stream FromManager) returns (stream ToManager);
 }
 
 
